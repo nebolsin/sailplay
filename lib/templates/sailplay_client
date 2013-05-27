@@ -1,0 +1,18 @@
+<%= javascript_tag %Q{
+  var _sp_options = {
+    depId: #{store_id.to_json},
+    position: #{position.to_json},
+    authHash: #{auth_hash.to_json},
+    publicKey: #{public_key.to_json},
+    originUserId: #{origin_user_id.to_json},
+    pic: #{pic.to_json},
+    link: #{link.to_json},
+    skin: #{skin.to_json}
+  };
+
+  (function() {
+    var sp = document.createElement('script'); sp.type = 'text/javascript'; sp.async = false; sp.charset = 'utf-8';
+    sp.src = ('https:' == document.location.protocol ? 'https://' : 'http://') + '#{host}/#{api_path}';
+    var scr = document.getElementsByTagName('script')[0]; scr.parentNode.insertBefore(sp, scr);
+  })();
+}%>
