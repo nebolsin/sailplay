@@ -2,6 +2,8 @@ require 'sailplay/api/base'
 
 module Sailplay
   class Gift < Base
+    attr_accessor :id, :sku, :name, :pic, :view_url, :pick_url, :points
+
     #{
     #    sku: 5,
     #    name: "Подарок 1",
@@ -10,16 +12,23 @@ module Sailplay
     #    points: 55,
     #    id: 25
     #}
-
-    attr_accessor :id, :sku, :name, :pic, :view_url, :pick_url, :points
-
-    def initialize(options = {})
-      @id = options[:id]
-      @name = options[:name]
-      @pic = options[:pic]
-      @view_url = options[:view_url]
-      @pick_url = options[:pick_url]
-      @points = options[:points]
+    def self.parse(json)
+      Sailplay::Gift.new(
+          :id => json[:id],
+          :sku => json[:sku],
+          :name => json[:name],
+          :pic => json[:pic],
+          :view_url => json[:view_url],
+          :pick_url => json[:pick_url],
+          :points => json[:points]
+      )
     end
+
+    def initialize(attrs = {})
+      [:id, :sku, :name, :pic, :view_url, :pick_url, :points].each do |attr|
+        instance_variable_set("@#{attr}", attrs[attr])
+      end
+    end
+
   end
 end

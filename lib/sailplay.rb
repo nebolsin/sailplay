@@ -1,6 +1,3 @@
-require 'forwardable'
-require 'logger'
-
 require 'sailplay/version'
 
 require 'sailplay/client'
@@ -54,8 +51,59 @@ module Sailplay
       self.configuration.logger
     end
 
+    # @param [String] phone
+    # @param [Hash]   options
+    #
+    # @option options [true|false] :auth — authenticate user
+    #
+    # @return [Sailplay::User]
+    def create_user(phone, options = {})
+      self.client.create_user(phone, options)
+    end
+
+    # @param [String] phone
+    # @param [Hash]   options
+    #
+    # @option options [true|false] :auth — authenticate user
+    #
+    # @return [Sailplay::User]
+    def find_user(phone, options = {})
+      self.client.find_user(phone, options)
+    end
+
+    # @param [String|Integer] phone_or_user_id
+    # @param [BigDecimal]     price
+    # @param [Hash]           options
+    #
+    # @option options [Integer] :order_id    —  ID заказа
+    # @option options [Decimal] :points_rate — коэффициент конвертации рублей в баллы. Может принимать значение из полуинтервала (0,1].
+    #                                          При отсутствии данного параметра, используется значение, указанное в настройках.
+    #                                          Формат points_rate=0.45
+    # @option options [true|false] :force_complete —  если true, транзакция считается подтвержденной несмотря на флаг в настройках.
+    #                                                 Данный аттрибут может быть использован, например, в случае когда часть оплат
+    #                                                 необходимо подтверждать, а про остальные известно что они уже подтверждены.
+    #
+    # @return [Sailplay::Purchase]
+    def create_purchase(phone_or_user_id, price, options = {})
+      self.client.create_purchase(phone_or_user_id, price, options)
+    end
+
+    # @param [Integer] order_id
+    # @param [Hash]    options
+    #
+    # @option options [BigDecimal] :price
+    def confirm_purchase(order_id, options = {})
+      self.client.confirm_purchase(order_id, options)
+    end
+
+
+      # @param [String] gift_public_key
+    def confirm_gift(gift_public_key)
+      self.client.confirm_gift(gift_public_key)
+    end
+
     def request(method, url, params)
-      client.request(method, url, params)
+      self.client.request(method, url, params)
     end
   end
 end

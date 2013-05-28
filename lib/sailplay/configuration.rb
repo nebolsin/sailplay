@@ -1,3 +1,5 @@
+require 'logger'
+
 module Sailplay
   class Configuration
     OPTIONS = [:host, :port, :secure, :endpoint, :connection_options, :store_id, :store_key, :store_pin, :logger]

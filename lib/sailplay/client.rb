@@ -33,13 +33,115 @@ module Sailplay
       end
     end
 
-    def logger
-      Sailplay.logger
+    # @param [String] phone
+    # @param [Hash]   options
+    #
+    # @option options [true|false] :auth — authenticate user
+    #
+    # @return [Sailplay::User]
+    def create_user(phone, options = {})
+      params = {:user_phone => phone}
+      params[:extra_fields] = 'auth_hash' if options[:auth]
+
+      response = request(:get, '/users/reg', :user_phone => phone)
+      if response.success?
+        User.parse(response.data)
+      else
+        raise APIError, "Cannot create user '#{phone}': #{response.error_message}"
+      end
+    end
+
+    # @param [String] phone
+    # @param [Hash]   options
+    #
+    # @option options [true|false] :auth — authenticate user
+    #
+    # @return [Sailplay::User]
+    def find_user(phone, options = {})
+      params = {:user_phone => phone}
+      params[:extra_fields] = 'auth_hash' if options[:auth]
+
+      response = Sailplay.request(:get, '/users/points-info', params)
+      if response.success?
+        User.parse(response.data)
+      else
+        raise APIError, "Cannot find a user '#{phone}': #{response.error_message}"
+      end
+    end
+
+    # options[:points_rate]    —  коэффициент конвертации рублей в баллы. Может принимать значение из полуинтервала (0,1].
+    #                             При отсутствии данного параметра, используется значение, указанное в настройках.
+    #                             Формат points_rate=0.45
+    # options[:force_complete] —  если true, транзакция считается подтвержденной несмотря на флаг в настройках.
+    #                             Данный аттрибут может быть использован, например, в случае когда часть оплат
+    #                             необходимо подтверждать, а про остальные известно что они уже подтверждены.
+    # options[:order_id]       —  ID заказа
+    #
+    # @return [Sailplay::Purchase]
+    def create_purchase(phone_or_user_id, price, options = {})
+      params = {:price => price}
+      if phone_or_user_id.is_a?(String) && phone_or_user_id =~ /\d{10,11}/
+        params[:user_phone] = phone_or_user_id
+      else
+        params[:origin_user_id] = phone_or_user_id
+      end
+
+      params[:points_rate] = options[:points_rate] if options[:points_rate]
+      params[:force_complete] = options[:force_complete] if options[:force_complete]
+      params[:order_num] = options[:order_id] if options[:order_id]
+
+      params[:fields] = [:public_key, options[:order_id] && :order_num].compact.join(',')
+
+      response = Sailplay.request(:get, '/purchases/new', params)
+
+      if response.success?
+        purchase = Purchase.parse(response.data[:purchase])
+        purchase.user = User.parse(response.data[:user])
+        purchase
+      else
+        raise APIError, "Cannot create a purchase: #{response.error_message}"
+      end
+    end
+
+    # @param [Integer] order_id
+    # @param [Hash]    options
+    #
+    # @option options [BigDecimal] :price
+    def confirm_purchase(order_id, options = {})
+      params = {:order_num => order_id}
+      params[:new_price] = options[:price] if options[:price]
+
+      response = request(:get, '/purchases/confirm', params)
+
+      if response.success?
+        purchase = Purchase.parse(response.data[:purchase])
+        purchase.user = User.parse(response.data[:user])
+        purchase
+      else
+        raise APIError, "Cannot confirm a purchase: #{response.error_message}"
+      end
+    end
+
+    # @param [String] gift_public_key
+    def confirm_gift(gift_public_key)
+      params = {:gift_public_key => gift_public_key}
+      response = request(:get, '/ecommerce/gifts/commit-transaction', params)
+
+      if response.success?
+      else
+        raise APIError, "Cannot confirm a gift: #{response.error_message}"
+      end
     end
 
     def request(method, url, params = {})
       execute_request(method, url, auth_params.merge(params))
     end
+
+    def logger
+      Sailplay.logger
+    end
+
+    private
 
     def auth_params
       {:store_department_id => store_id, :token => api_token}
@@ -78,8 +180,6 @@ module Sailplay
     def credentials?
       credentials.values.all?
     end
-
-    private
 
     def execute_request(method, url, params = {})
       logger.debug(self.class) {"Starting #{method} request to #{url} with #{params.inspect}"}
