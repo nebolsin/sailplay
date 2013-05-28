@@ -8,37 +8,11 @@ module Sailplay
       private
 
       def sailplay_options
-        path = File.join File.dirname(__FILE__), '..', '..', 'templates', 'sailplay_client'
-
-        options = {
-            :file            => path,
-            :layout          => false,
-            :use_full_path   => false,
-            :handlers        => [:erb],
-            :locals          => {
-                :host      => Sailplay.configuration.host,
-                :api_path  => Sailplay.configuration.js_api_path,
-                :store_id  => Sailplay.configuration.store_id,
-                :position  => Sailplay.configuration.js_position.to_s.split('_'),
-                :skin      => nil
-            }
-        }
+        @_sailplay_options ||= {}
       end
-      
-      def sailplay_client(opts = {})
-        default_options = {
-            :origin_user_id => '',
-            :auth_hash => '',
-            :public_key => 'none',
-            :link => '',
-            :pic => '',
-            :skin => {}
-        }
 
-        options = sailplay_options
-        options[:locals].merge!(default_options.merge(opts))
-
-        result = sailplay_compile_template(options)
+      def sailplay_client(options = {})
+        result = sailplay_compile_template(sailplay_options.merge(options))
 
         if result.respond_to?(:html_safe)
           result.html_safe
@@ -48,11 +22,32 @@ module Sailplay
       end
 
       def sailplay_compile_template(options)
+        template_options = {
+          :file          => File.join(File.dirname(__FILE__), '..', '..', 'templates', 'sailplay_client'),
+          :layout        => false,
+          :use_full_path => false,
+          :handlers      => [:erb],
+          :locals        => {
+            :host           => Sailplay.configuration.host,
+            :api_path       => Sailplay.configuration.js_api_path,
+            :store_id       => Sailplay.configuration.store_id,
+            :position       => Sailplay.configuration.js_position.to_s.split('_'),
+            :origin_user_id => '',
+            :auth_hash      => '',
+            :public_key     => 'none',
+            :link           => '',
+            :pic            => '',
+            :skin           => {}
+          }
+        }
+
+        template_options[:locals].merge!(options)
+
         case @template
           when ActionView::Template
-            @template.render options
+            @template.render template_options
           else
-            render_to_string options
+            render_to_string template_options
         end
       end
     end
