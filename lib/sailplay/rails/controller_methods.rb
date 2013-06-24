@@ -11,11 +11,13 @@ module Sailplay
       private
 
       def authenticate_sailplay_user(phone, force_reload = false)
-        session[:sailplay] = nil if force_reload
+        return if phone.nil?
 
-        if session[:sailplay] && session[:sailplay][:auth_expires] > Time.now
-          sailplay_options[:auth_hash] = cookies[:sailplay_auth]
-        else
+        if force_reload || (session[:sailplay] && session[:sailplay][:auth_expires] < Time.now)
+          session[:sailplay] = nil
+        end
+
+        unless session[:sailplay]
           user = begin
             Sailplay.find_user(phone, :auth => true)
           rescue Sailplay::APIError
@@ -23,17 +25,17 @@ module Sailplay
           end
 
           if user
-            sailplay_options[:auth_hash] = user.auth_hash
             session[:sailplay] = {:auth_hash => user.auth_hash, :auth_expires => 3.days.from_now}
           end
-
-          user
         end
+
+        sailplay_options[:auth_hash] = session[:sailplay][:auth_hash] if session[:sailplay]
       end
 
-      def report_sailplay_purchase(user_phone_or_id, order_id, price)
-        purchase = Sailplay.create_purchase(user_phone_or_id, price, :order_id => order_id)
+      def report_sailplay_purchase(user_id, order_id, price)
+        purchase = Sailplay.create_purchase(user_id, price, :order_id => order_id)
         sailplay_options[:public_key] = purchase.public_key
+        purchase
       rescue Sailplay::Error => e
         logger.error "Error reporting purchase to Sailplay: #{e.message}"
       end

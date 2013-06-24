@@ -5,6 +5,7 @@
     authHash: #{auth_hash.to_json},
     publicKey: #{public_key.to_json},
     originUserId: #{origin_user_id.to_json},
+    probableUserPhone: #{user_phone.to_json},
     pic: #{pic.to_json},
     link: #{link.to_json},
     skin: #{skin.to_json}

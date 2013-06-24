@@ -78,14 +78,10 @@ module Sailplay
     # options[:order_id]       —  ID заказа
     #
     # @return [Sailplay::Purchase]
-    def create_purchase(phone_or_user_id, price, options = {})
-      params = {:price => price}
-      if phone_or_user_id.is_a?(String) && phone_or_user_id =~ /\d{10,11}/
-        params[:user_phone] = phone_or_user_id
-      else
-        params[:origin_user_id] = phone_or_user_id
-      end
+    def create_purchase(user_id, price, options = {})
+      params = {:price => price, :origin_user_id => user_id}
 
+      params[:user_phone] = options[:phone] if options[:phone]
       params[:points_rate] = options[:points_rate] if options[:points_rate]
       params[:force_complete] = options[:force_complete] if options[:force_complete]
       params[:order_num] = options[:order_id] if options[:order_id]
