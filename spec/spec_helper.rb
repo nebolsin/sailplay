@@ -1,3 +1,6 @@
+require 'coveralls'
+Coveralls.wear!
+
 require 'rspec/autorun'
 require 'webmock/rspec'
 
