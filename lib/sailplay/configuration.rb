@@ -31,6 +31,13 @@ module Sailplay
     # one of :top_left, :top_right, :center_left, :center_right, :bottom_left, :bottom_right
     attr_accessor :js_position
 
+    # {
+    #   :buttonText => 'Text', :buttonBgGradient => ["#78bb44", "#367300"], :buttonFontSize => '9px',
+    #   :picUrl => "http://some.url", :bgColor => '#ffffff', :borderColor => '#ffffff', :textColor => '#300c2f',
+    #   :pointsColor => '#c81750', :buttonTextColor => '#ffffff'
+    # }
+    attr_accessor :skin
+
 
     DEFAULT_CONNECTION_OPTIONS = {
         :headers => {
@@ -48,6 +55,8 @@ module Sailplay
 
       @js_api_path = 'static/js/sailplay.js'
       @js_position = :top_right
+
+      @skin = {}
 
       @connection_options = DEFAULT_CONNECTION_OPTIONS.dup
     end

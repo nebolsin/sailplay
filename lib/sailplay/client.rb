@@ -91,9 +91,7 @@ module Sailplay
       response = Sailplay.request(:get, '/purchases/new', params)
 
       if response.success?
-        purchase = Purchase.parse(response.data[:purchase])
-        purchase.user = User.parse(response.data[:user])
-        purchase
+        Purchase.parse(response.data)
       else
         raise APIError, "Cannot create a purchase: #{response.error_message}"
       end
@@ -110,9 +108,7 @@ module Sailplay
       response = request(:get, '/purchases/confirm', params)
 
       if response.success?
-        purchase = Purchase.parse(response.data[:purchase])
-        purchase.user = User.parse(response.data[:user])
-        purchase
+        Purchase.parse(response.data)
       else
         raise APIError, "Cannot confirm a purchase: #{response.error_message}"
       end

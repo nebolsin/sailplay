@@ -32,13 +32,13 @@ module Sailplay
             :api_path       => Sailplay.configuration.js_api_path,
             :store_id       => Sailplay.configuration.store_id,
             :position       => Sailplay.configuration.js_position.to_s.split('_'),
+            :skin           => Sailplay.configuration.skin,
             :origin_user_id => '',
             :user_phone     => '',
             :auth_hash      => '',
             :public_key     => 'none',
             :link           => '',
-            :pic            => '',
-            :skin           => {}
+            :pic            => ''
           }
         }
 
