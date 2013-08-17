@@ -33,10 +33,10 @@ module Sailplay
             :store_id       => Sailplay.configuration.store_id,
             :position       => Sailplay.configuration.js_position.to_s.split('_'),
             :skin           => Sailplay.configuration.skin,
-            :origin_user_id => session.delete(:sailplay_purchase_key).try(:to_s),
+            :origin_user_id => '',
             :user_phone     => '',
             :auth_hash      => '',
-            :public_key     => 'none',
+            :public_key     => session.delete(:sailplay_purchase_key) || 'none',
             :link           => '',
             :pic            => ''
           }
