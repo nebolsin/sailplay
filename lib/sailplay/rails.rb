@@ -1,6 +1,5 @@
 require 'sailplay'
-require 'sailplay/rails/controller_methods'
-require 'sailplay/rails/helper'
+require 'sailplay/rails/client'
 
 module Sailplay
   module Rails
