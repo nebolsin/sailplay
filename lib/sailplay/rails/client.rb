@@ -47,7 +47,7 @@ module Sailplay
 
       def report_sailplay_purchase(user_id, order_id, price)
         purchase = Sailplay.create_purchase(user_id, price, :order_id => order_id)
-        sailplay_options :transaction_key => purchase.public_key
+        sailplay_options :public_key => purchase.public_key
         purchase
       rescue Sailplay::Error => e
         logger.error "Error reporting purchase to Sailplay: #{e.message}"
