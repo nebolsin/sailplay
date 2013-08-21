@@ -6,8 +6,7 @@ module Sailplay
   module Rails
     def self.initialize
       if defined?(::ActionController::Base)
-        ::ActionController::Base.send(:include, Sailplay::Rails::ControllerMethods)
-        ::ActionController::Base.send(:include, Sailplay::Rails::Helper)
+        ::ActionController::Base.send(:include, Sailplay::Rails::Client)
       end
 
       rails_logger = if defined?(::Rails.logger)
