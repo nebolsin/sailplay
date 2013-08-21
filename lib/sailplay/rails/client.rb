@@ -4,7 +4,7 @@ module Sailplay
       def self.included(base)
         base.send :around_filter, :prepare_sailplay_options
 
-        base.send :helper_method, :sailplay_client?, :render_sailplay_client
+        base.send :helper_method, :render_sailplay_client
       end
 
       protected
@@ -12,10 +12,6 @@ module Sailplay
       def assign_sailplay_user(user)
         sailplay_options(:origin_user_id => user.sailplay_user_id) if user.respond_to?(:sailplay_user_id)
         sailplay_options(:probable_user_phone => user.sailplay_phone) if user.respond_to?(:sailplay_user_id)
-      end
-
-      def sailplay_client?
-        true
       end
 
       def render_sailplay_client(options = {})
