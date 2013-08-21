@@ -74,7 +74,7 @@ module Sailplay
       end
 
       def save_sailplay_options
-        (session[:sailplay] ||= {}).merge! sailplay_options
+        (session[:sailplay] ||= {}).merge! @_sailplay_options if @_sailplay_options
       end
 
       def load_sailplay_options
