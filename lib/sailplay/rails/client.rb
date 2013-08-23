@@ -45,8 +45,8 @@ module Sailplay
         end
       end
 
-      def report_sailplay_purchase(user_id, order_id, price)
-        purchase = Sailplay.create_purchase(user_id, price, :order_id => order_id)
+      def report_sailplay_purchase(user_id, order_id, price, points_rate = 0.15)
+        purchase = Sailplay.create_purchase(user_id, price, :order_id => order_id, :points_rate => points_rate)
         sailplay_options :public_key => purchase.public_key
         purchase
       rescue Sailplay::Error => e
