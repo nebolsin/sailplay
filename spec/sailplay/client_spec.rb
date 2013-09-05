@@ -8,7 +8,7 @@ describe Sailplay::Client do
       Sailplay.client.host.should eq('sailplay.ru')
       Sailplay.client.port.should eq(443)
       Sailplay.client.secure.should be_true
-      Sailplay.client.endpoint.should eq('/api/v1')
+      Sailplay.client.endpoint.should eq('/api')
     end
 
     it 'should set the options' do

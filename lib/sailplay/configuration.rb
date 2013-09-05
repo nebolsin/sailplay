@@ -12,7 +12,7 @@ module Sailplay
     # connections, 80 for insecure connections).
     attr_accessor :port
 
-    # Url prefix for API (defaults to /api/v1)
+    # Url prefix for API (defaults to /api)
     attr_accessor :endpoint
 
     # +true+ for https connections, +false+ for http connections.
@@ -51,7 +51,7 @@ module Sailplay
     def initialize
       @host =     'sailplay.ru'
       @secure =   true
-      @endpoint = '/api/v1'
+      @endpoint = '/api'
 
       @js_api_path = 'static/js/sailplay.js'
       @js_position = :top_right

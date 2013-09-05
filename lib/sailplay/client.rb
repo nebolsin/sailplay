@@ -43,7 +43,7 @@ module Sailplay
       params = {:user_phone => phone}
       params[:extra_fields] = 'auth_hash' if options[:auth]
 
-      response = request(:get, '/users/reg', :user_phone => phone)
+      response = request(:get, '/v1/users/reg', :user_phone => phone)
       if response.success?
         User.parse(response.data)
       else
@@ -51,17 +51,18 @@ module Sailplay
       end
     end
 
-    # @param [String] phone
+    # @param [String] user_id
     # @param [Hash]   options
     #
     # @option options [true|false] :auth — authenticate user
     #
     # @return [Sailplay::User]
-    def find_user(phone, options = {})
-      params = {:user_phone => phone}
+    def find_user(user_id, options = {})
+      params = {:origin_user_id => user_id}
+      params[:user_phone] = options[:phone] if options[:phone]
       params[:extra_fields] = 'auth_hash' if options[:auth]
 
-      response = Sailplay.request(:get, '/users/points-info', params)
+      response = request(:get, '/v1/users/points-info', params)
       if response.success?
         User.parse(response.data)
       else
@@ -88,7 +89,7 @@ module Sailplay
 
       params[:fields] = [:public_key, options[:order_id] && :order_num].compact.join(',')
 
-      response = Sailplay.request(:get, '/purchases/new', params)
+      response = request(:get, '/v1/purchases/new', params)
 
       if response.success?
         Purchase.parse(response.data)
@@ -105,7 +106,7 @@ module Sailplay
       params = {:order_num => order_id}
       params[:new_price] = options[:price] if options[:price]
 
-      response = request(:get, '/purchases/confirm', params)
+      response = request(:get, '/v1/purchases/confirm', params)
 
       if response.success?
         Purchase.parse(response.data)
@@ -117,11 +118,25 @@ module Sailplay
     # @param [String] gift_public_key
     def confirm_gift(gift_public_key)
       params = {:gift_public_key => gift_public_key}
-      response = request(:get, '/ecommerce/gifts/commit-transaction', params)
+      response = request(:get, '/v1/ecommerce/gifts/commit-transaction', params)
 
       if response.success?
       else
         raise APIError, "Cannot confirm a gift: #{response.error_message}"
+      end
+    end
+    
+    # @param [String]  user_id    origin user id
+    # @param [Integer] points     amount of points to deposit to the user's account
+    # @param [String]  comment    
+    def add_points(user_id, points, comment = nil)
+      params = {:origin_user_id => user_id, :points => points, :comment => comment}
+      response = request(:get, '/v2/points/add', params)
+      
+      if response.success?
+        response.data[:public_key]
+      else
+        raise APIError, "Cannot add points: #{response.error_message}"
       end
     end
 
@@ -152,7 +167,7 @@ module Sailplay
           'please check that store_id, store_key and pin_code are ' +
           'configured' unless credentials?
 
-      response = execute_request(:get, 'login', credentials)
+      response = execute_request(:get, '/v1/login', credentials)
 
       if response.success?
         response.data[:token]

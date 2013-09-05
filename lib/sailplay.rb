@@ -67,11 +67,11 @@ module Sailplay
     # @option options [true|false] :auth — authenticate user
     #
     # @return [Sailplay::User]
-    def find_user(phone, options = {})
-      self.client.find_user(phone, options)
+    def find_user(user_id, options = {})
+      self.client.find_user(user_id, options)
     end
 
-    # @param [String|Integer] phone_or_user_id
+    # @param [String          user_id
     # @param [BigDecimal]     price
     # @param [Hash]           options
     #
@@ -84,8 +84,12 @@ module Sailplay
     #                                                 необходимо подтверждать, а про остальные известно что они уже подтверждены.
     #
     # @return [Sailplay::Purchase]
-    def create_purchase(phone_or_user_id, price, options = {})
-      self.client.create_purchase(phone_or_user_id, price, options)
+    def create_purchase(user_id, price, options = {})
+      self.client.create_purchase(user_id, price, options)
+    end
+    
+    def add_points(user_id, points, comment)
+      self.client.add_points(user_id, points, comment)
     end
 
     # @param [Integer] order_id

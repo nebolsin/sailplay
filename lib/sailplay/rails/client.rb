@@ -52,6 +52,13 @@ module Sailplay
       rescue Sailplay::Error => e
         logger.error "Error reporting purchase to Sailplay: #{e.message}"
       end
+      
+      def add_sailplay_points(user_id, points, comment)
+        key = Sailplay.add_points(user_id, points, comment)
+        sailplay_options :public_key => key
+      rescue Sailplay::Error => e
+        logger.error "Error adding points: #{e.message}"
+      end
 
 
       def sailplay_options(options = {})

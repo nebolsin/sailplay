@@ -18,8 +18,8 @@ describe Sailplay::Configuration do
       subject.secure.should be_true
     end
 
-    it 'should set the endpoint to /api/v1' do
-      subject.endpoint.should eq('/api/v1')
+    it 'should set the endpoint to /api' do
+      subject.endpoint.should eq('/api')
     end
 
     it 'shouldn\'t set store_id' do
