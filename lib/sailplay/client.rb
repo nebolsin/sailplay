@@ -86,7 +86,7 @@ module Sailplay
       params[:points_rate] = options[:points_rate] if options[:points_rate]
       params[:force_complete] = options[:force_complete] if options[:force_complete]
       params[:order_num] = options[:order_id] if options[:order_id]
-      params[:l_date] = options[:date].to_f if options[:date]
+      params[:l_date] = options[:date].to_i if options[:date]
 
       params[:fields] = [:public_key, options[:order_id] && :order_num].compact.join(',')
 
