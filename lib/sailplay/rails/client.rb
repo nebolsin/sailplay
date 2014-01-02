@@ -11,7 +11,8 @@ module Sailplay
 
       def assign_sailplay_user(user)
         sailplay_options(:origin_user_id => user.sailplay_user_id) if user.respond_to?(:sailplay_user_id)
-        sailplay_options(:probable_user_phone => user.sailplay_phone) if user.respond_to?(:sailplay_user_id)
+        sailplay_options(:probable_user_phone => user.sailplay_phone) if user.respond_to?(:sailplay_phone)
+        sailplay_options(:account => user.sailplay_account) if user.respond_to?(:sailplay_account)
       end
 
       def render_sailplay_client(options = {})
@@ -40,7 +41,7 @@ module Sailplay
           end
 
           if user
-            sailplay_options :auth_hash => user.auth_hash, :auth_expires => 3.days.from_now
+            sailplay_options :auth_hash => user[:auth_hash], :auth_expires => 3.days.from_now
           end
         end
       end
@@ -89,26 +90,13 @@ module Sailplay
         session[:sailplay] = nil
       end
 
-
       def sailplay_compile_template(options)
         template_options = {
           :file          => File.join(File.dirname(__FILE__), '..', '..', 'templates', 'sailplay_client'),
           :layout        => false,
           :use_full_path => false,
           :handlers      => [:erb],
-          :locals        => {
-            :host           => Sailplay.configuration.host,
-            :api_path       => Sailplay.configuration.js_api_path,
-            :store_id       => Sailplay.configuration.store_id,
-            :position       => Sailplay.configuration.js_position.to_s.split('_'),
-            :skin           => Sailplay.configuration.skin,
-            :origin_user_id => '',
-            :user_phone     => '',
-            :auth_hash      => '',
-            :public_key     => 'none',
-            :link           => '',
-            :pic            => ''
-          }
+          :locals        => Sailplay.configuration.default_js_client_options
         }
 
         template_options[:locals].merge!(options)

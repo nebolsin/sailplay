@@ -99,6 +99,22 @@ module Sailplay
       end
     end
 
+    def default_js_client_options
+      {
+          :host           => host,
+          :api_path       => js_api_path,
+          :store_id       => store_id,
+          :position       => js_position.to_s.split('_'),
+          :skin           => skin,
+          :origin_user_id => '',
+          :user_phone     => '',
+          :auth_hash      => '',
+          :public_key     => 'none',
+          :link           => '',
+          :pic            => ''
+      }
+    end
+
     private
 
     # Determines what port should we use for sending notices.

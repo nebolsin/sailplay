@@ -19,19 +19,24 @@ module Sailplay
     alias_method :secure?, :secure
 
     def initialize(options = {})
-      [ :protocol,
-        :host,
-        :port,
-        :endpoint,
-        :secure,
-        :connection_options,
-        :store_id,
-        :store_key,
-        :store_pin
+      [:protocol,
+       :host,
+       :port,
+       :endpoint,
+       :secure,
+       :connection_options,
+       :store_id,
+       :store_key,
+       :store_pin
       ].each do |option|
         instance_variable_set("@#{option}", options[option])
       end
     end
+
+    def request(method, url, params = {})
+      Sailplay::Response.new execute_request(method, url, auth_params.merge(params))
+    end
+
 
     # @param [String] phone
     # @param [Hash]   options
@@ -40,15 +45,12 @@ module Sailplay
     #
     # @return [Sailplay::User]
     def create_user(phone, options = {})
-      params = {:user_phone => phone}
+      params                = {:user_phone => phone}
       params[:extra_fields] = 'auth_hash' if options[:auth]
 
-      response = request(:get, '/v1/users/reg', :user_phone => phone)
-      if response.success?
-        User.parse(response.data)
-      else
-        raise APIError, "Cannot create user '#{phone}': #{response.error_message}"
-      end
+      response = request(:get, '/v1/users/reg/', :user_phone => phone)
+
+      handle_response response, "Cannot create user '#{phone}': #{response.error_message}"
     end
 
     # @param [String] user_id
@@ -56,18 +58,15 @@ module Sailplay
     #
     # @option options [true|false] :auth — authenticate user
     #
-    # @return [Sailplay::User]
+    # @return [Hash]
     def find_user(user_id, options = {})
-      params = {:origin_user_id => user_id}
-      params[:user_phone] = options[:phone] if options[:phone]
+      params                = {:origin_user_id => user_id}
+      params[:user_phone]   = options[:phone] if options[:phone]
       params[:extra_fields] = 'auth_hash' if options[:auth]
+      params[:history]      = '1' if options[:history]
 
-      response = request(:get, '/v1/users/points-info', params)
-      if response.success?
-        User.parse(response.data)
-      else
-        raise APIError, "Cannot find a user '#{phone}': #{response.error_message}"
-      end
+      response = request(:get, '/v1/users/points-info/', params)
+      handle_response response, "Cannot find a user '#{user_id}': #{response.error_message}"
     end
 
     # options[:points_rate]    —  коэффициент конвертации рублей в баллы. Может принимать значение из полуинтервала (0,1].
@@ -78,25 +77,21 @@ module Sailplay
     #                             необходимо подтверждать, а про остальные известно что они уже подтверждены.
     # options[:order_id]       —  ID заказа
     #
-    # @return [Sailplay::Purchase]
+    # @return [Hash] :user     —  @see Sailplay::Response#sanitize_user
     def create_purchase(user_id, price, options = {})
-      params = {:price => price, :origin_user_id => user_id}
+      params                  = {:price => price, :origin_user_id => user_id}
 
-      params[:user_phone] = options[:phone] if options[:phone]
-      params[:points_rate] = options[:points_rate] if options[:points_rate]
+      params[:user_phone]     = options[:phone] if options[:phone]
+      params[:points_rate]    = options[:points_rate] if options[:points_rate]
       params[:force_complete] = options[:force_complete] if options[:force_complete]
-      params[:order_num] = options[:order_id] if options[:order_id]
-      params[:l_date] = options[:date].to_i if options[:date]
+      params[:order_num]      = options[:order_id] if options[:order_id]
+      params[:l_date]         = options[:date].to_i if options[:date]
 
       params[:fields] = [:public_key, options[:order_id] && :order_num].compact.join(',')
 
       response = request(:get, '/v1/purchases/new', params)
 
-      if response.success?
-        Purchase.parse(response.data)
-      else
-        raise APIError, "Cannot create a purchase: #{response.error_message}"
-      end
+      handle_response response, "Cannot create a purchase: #{response.error_message}"
     end
 
     # @param [Integer] order_id
@@ -104,45 +99,30 @@ module Sailplay
     #
     # @option options [BigDecimal] :price
     def confirm_purchase(order_id, options = {})
-      params = {:order_num => order_id}
+      params             = {:order_num => order_id}
       params[:new_price] = options[:price] if options[:price]
 
       response = request(:get, '/v1/purchases/confirm', params)
 
-      if response.success?
-        Purchase.parse(response.data)
-      else
-        raise APIError, "Cannot confirm a purchase: #{response.error_message}"
-      end
+      handle_response response, "Cannot confirm a purchase: #{response.error_message}"
     end
 
     # @param [String] gift_public_key
     def confirm_gift(gift_public_key)
-      params = {:gift_public_key => gift_public_key}
+      params   = {:gift_public_key => gift_public_key}
       response = request(:get, '/v1/ecommerce/gifts/commit-transaction', params)
 
-      if response.success?
-      else
-        raise APIError, "Cannot confirm a gift: #{response.error_message}"
-      end
-    end
-    
-    # @param [String]  user_id    origin user id
-    # @param [Integer] points     amount of points to deposit to the user's account
-    # @param [String]  comment    
-    def add_points(user_id, points, comment = nil)
-      params = {:origin_user_id => user_id, :points => points, :comment => comment}
-      response = request(:get, '/v2/points/add', params)
-      
-      if response.success?
-        response.data[:public_key]
-      else
-        raise APIError, "Cannot add points: #{response.error_message}"
-      end
+      handle_response response, "Cannot confirm a gift: #{response.error_message}"
     end
 
-    def request(method, url, params = {})
-      execute_request(method, url, auth_params.merge(params))
+    # @param [String]  user_id    origin user id
+    # @param [Integer] points     amount of points to deposit to the user's account
+    # @param [String]  comment
+    def add_points(user_id, points, comment = nil)
+      params   = {:origin_user_id => user_id, :points => points, :comment => comment}
+      response = request(:get, '/v2/points/add', params)
+
+      handle_response response, "Cannot add points: #{response.error_message}"
     end
 
     def logger
@@ -164,24 +144,20 @@ module Sailplay
     end
 
     def login
-      raise ConfigurationError, 'Missing client configuration: ' +
-          'please check that store_id, store_key and pin_code are ' +
-          'configured' unless credentials?
+      raise ConfigurationError,
+            'Missing client configuration: please check that store_id, store_key and pin_code are configured' unless credentials?
 
-      response = execute_request(:get, '/v1/login', credentials)
+      response =  Sailplay::Response.new(execute_request(:get, '/v1/login', credentials))
+      payload = response.payload
 
-      if response.success?
-        response.data[:token]
-      else
-        raise AuthenticationError.new("Cannot authenticate on Sailplay. Check your config. (Response: #{response})")
-      end
+      payload[:token] or raise AuthenticationError, "Cannot authenticate on Sailplay. Check your config. (Response: #{response})"
     end
 
     def credentials
       {
-          :store_department_id => @store_id,
+          :store_department_id  => @store_id,
           :store_department_key => @store_key,
-          :pin_code => @store_pin
+          :pin_code             => @store_pin
       }
     end
 
@@ -190,44 +166,25 @@ module Sailplay
     end
 
     def execute_request(method, url, params = {})
-      logger.debug(self.class) {"Starting #{method} request to #{url} with #{params.inspect}"}
-      url = api_url(url)
-      headers = @connection_options[:headers].merge(:params => params)
+      logger.debug(self.class) { "Starting #{method} request to #{url} with #{params.inspect}" }
 
-      request_opts = {:method => method, :url => url, :headers => headers}
+      RestClient::Request.execute(
+          :method  => method,
+          :url     => api_url(url),
+          :headers => connection_options[:headers].merge(:params => params)
+      )
 
-      begin
-        response = RestClient::Request.execute(request_opts)
-      rescue RestClient::ExceptionWithResponse => e
-        if e.http_code && e.http_body
-          handle_api_error(e.http_code, e.http_body)
-        else
+    rescue RestClient::ExceptionWithResponse => e
+      e.http_code && e.http_body ?
+          handle_api_error(e.http_code, e.http_body) :
           handle_restclient_error(e)
-        end
-      rescue RestClient::Exception, SocketError, Errno::ECONNREFUSED => e
-        handle_restclient_error(e)
-      end
+    rescue RestClient::Exception, SocketError, Errno::ECONNREFUSED => e
+      handle_restclient_error(e)
+    end
 
-
-      http_code, http_body = response.code, response.body
-
-      logger.debug(self.class) {"\t HTTP Code -> #{http_code}"}
-      #logger.debug(self.class) {"\t HTTP Body -> #{http_body}"}
-
-      begin
-        json_body = MultiJson.load(http_body, :symbolize_keys => true)
-      rescue MultiJson::DecodeError
-        raise APIError.new("Invalid response object from API: #{http_body.inspect} (HTTP response code was #{http_code})", http_code, http_body)
-      end
-
-      #logger.debug(self.class) {"\t JSON Body -> #{json_body}"}
-
-      response = Response.new(json_body)
-
-      logger.debug(self.class) {"\t Valid     -> #{response.success?}"}
-      logger.debug(self.class) {"\t Payload   -> #{response.data}"}
-
-      response
+    def handle_response(response, message = nil)
+      message ||= response.error_message
+      response.payload or raise APIError, message
     end
 
     def handle_restclient_error(e)
@@ -245,27 +202,26 @@ module Sailplay
               "If this problem persists, let us know at support@sailplay.ru."
       end
       message += "\n\n(Network error: #{e.message})"
-      raise APIConnectionError, message
+      raise Sailplay::APIConnectionError, message
     end
 
     def handle_api_error(http_code, http_body)
       begin
         error_obj = MultiJson.load(http_body, :symbolize_keys => true)
-        message = error_obj[:message]
+        message   = error_obj[:message]
       rescue MultiJson::DecodeError
         message = "Invalid response object from API: #{http_body.inspect} (HTTP response code was #{http_code})"
-        raise APIError.new(message, http_code, http_body)
+        raise Sailplay::APIError.new(message, http_code, http_body)
       end
 
       case http_code
         when 400, 404 then
-          raise InvalidRequestError.new(message, http_code, http_body, error_obj)
+          raise Sailplay::InvalidRequestError.new(message, http_code, http_body, error_obj)
         when 401
-          raise AuthenticationError.new(message, http_code, http_body, error_obj)
+          raise Sailplay::AuthenticationError.new(message, http_code, http_body, error_obj)
         else
-          raise APIError.new(message, http_code, http_body, error_obj)
+          raise Sailplay::APIError.new(message, http_code, http_body, error_obj)
       end
     end
-
   end
 end

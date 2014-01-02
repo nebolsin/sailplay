@@ -1,25 +1,47 @@
+require 'multi_json'
+require 'sailplay/error'
+require 'sailplay/response/sanitizer'
+
 module Sailplay
   class Response
-    attr_reader :raw_data, :data, :error_message
+    include Sanitizer
 
-    def initialize(json_body)
-      @raw_data = json_body
+    attr_reader :code, :body, :json
+    attr_reader :success, :payload, :error_message
 
-      if @raw_data && @raw_data[:status] == 'ok'
-        @success = true
-        @data = @raw_data.reject {|k, v| k == :status}
-      else
-        @success = false
-        @error_message = @raw_data[:message]
-      end
-    end
+    def initialize(response)
+      @code, @body = response.code, response.body
+      @json        = MultiJson.load(@body, :symbolize_keys => true)
 
-    def success?
-      @success
+      extract_and_sanitize_payload! if @json
+    rescue MultiJson::DecodeError
+      raise APIError.new("Invalid response object from API: #{@body.inspect} (HTTP response code was #{@code})", @code, @body)
     end
 
     def error?
       !success?
+    end
+
+    private
+
+    def extract_status!
+      @success = @json && @json[:status] == 'ok'
+    end
+
+    def extract_and_sanitize_payload!
+      @payload = {}
+      @json.each do |key, value|
+        case key
+          when :status
+            @status = (value == 'ok')
+          when :message
+            @error_message = value
+          when :user, :purchase
+            @payload[key] = send("sanitize_#{key}", value)
+          else
+            @payload[key] = value
+        end
+      end
     end
   end
 end

@@ -1,18 +1,13 @@
 require 'sailplay/version'
 
 require 'sailplay/client'
-require 'sailplay/error'
 require 'sailplay/configuration'
+require 'sailplay/error'
 require 'sailplay/response'
-
-require 'sailplay/api/base'
-require 'sailplay/api/user'
-require 'sailplay/api/gift'
-require 'sailplay/api/purchase'
 
 module Sailplay
   class << self
-    # The client object is responsible for communication with Sailplay API server.
+      # The client object is responsible for communication with Sailplay API server.
     attr_writer :client
 
     # A Sailplay configuration object.
@@ -56,7 +51,7 @@ module Sailplay
     #
     # @option options [true|false] :auth — authenticate user
     #
-    # @return [Sailplay::User]
+    # @return [Hash]
     def create_user(phone, options = {})
       self.client.create_user(phone, options)
     end
@@ -66,12 +61,12 @@ module Sailplay
     #
     # @option options [true|false] :auth — authenticate user
     #
-    # @return [Sailplay::User]
+    # @return Hash  user attributes
     def find_user(user_id, options = {})
       self.client.find_user(user_id, options)
     end
 
-    # @param [String          user_id
+    # @param [String]         user_id
     # @param [BigDecimal]     price
     # @param [Hash]           options
     #
@@ -83,7 +78,7 @@ module Sailplay
     #                                                 Данный аттрибут может быть использован, например, в случае когда часть оплат
     #                                                 необходимо подтверждать, а про остальные известно что они уже подтверждены.
     #
-    # @return [Sailplay::Purchase]
+    # @return [Нash purchase, Hash user]
     def create_purchase(user_id, price, options = {})
       self.client.create_purchase(user_id, price, options)
     end
